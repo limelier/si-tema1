@@ -10,7 +10,7 @@ class SocketEOFException(Exception):
 
 
 def send_header(s: socket, buffer: bytes):
-    header: int = len(buffer)
+    header = len(buffer)
     s.sendall(header.to_bytes(HEADER_SIZE, byteorder='big'))
     s.sendall(buffer)
 

@@ -5,7 +5,7 @@ from socket_util import send_header, recv_header
 host = '127.0.0.1'
 port_A = 3002
 port_B = 3003
-port_K = 3001
+port_KM = 3001
 
 shared_key = b'\x08\xe4\x7f\xe8\xf2-\x86l\xef\xca\x83\xf7\xa0?\xf2N\xd9\x98F\x01\xadkhG\x8d\xcc\x1f\x90\xc5H,\x98'
 
@@ -25,10 +25,9 @@ def initiate():
     data = bytes()
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((host, port_K))
+        s.connect((host, port_KM))
         send_header(s, bytes(choice, 'utf-8'))
         data = recv_header(s)
-        s.sendall(b'doy')
 
     print(data)
 
