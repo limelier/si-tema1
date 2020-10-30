@@ -1,7 +1,6 @@
 import os
 import socket
 from typing import Any
-
 from socket_util import send_header, recv_header
 
 ecb_key = os.urandom(32)
