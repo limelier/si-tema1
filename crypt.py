@@ -58,25 +58,30 @@ class CipherOFB:
         Initialize with a 128-, 256- or 512-bit key, and a 16-byte initialization vector.
         """
         self._key: bytes = key
-        self._iv: bytes = iv
         self._cipher: AES = AES.new(key, AES.MODE_ECB)
         self._keystream_block: bytes = self._cipher.encrypt(iv)
+        self._keystream_index: int = 0
 
     def _gen_next_keystream_block(self):
         self._keystream_block = self._cipher.encrypt(self._keystream_block)
+
+    def _get_next_keystream_byte(self):
+        if self._keystream_index > 15:
+            self._keystream_index = 0
+            self._gen_next_keystream_block()
+        byte = self._keystream_block[self._keystream_index]
+        self._keystream_index += 1
+        return byte
 
     def transform(self, input_text: bytes) -> bytes:
         """
         Encrypt OR decrypt the input text. DO NOT USE the same cipher for both functions.
         """
         ciphertext = bytearray(len(input_text))  # preallocate, same length as input_text
-        i = 0
+
         for index, byte in enumerate(input_text):
-            if i > 15:
-                i = 0
-                self._gen_next_keystream_block()
-            ciphertext[index] = byte ^ self._keystream_block[i]
-            i += 1
+            ciphertext[index] = byte ^ self._get_next_keystream_byte()
+            self._keystream_index += 1
         return bytes(ciphertext)
 
 
