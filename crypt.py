@@ -50,51 +50,42 @@ def decrypt_ecb(key: bytes, ciphertext: bytes) -> bytes:
     return decrypted
 
 
-def keystream_blocks(key: bytes, iv: bytes, count: int) -> List[bytes]:
-    cipher = AES.new(key, AES.MODE_ECB)
-    blocks = [cipher.encrypt(iv)]
+class CipherOFB:
+    def __init__(self, key: bytes, iv: bytes):
+        """
+        Initialize with a 128-, 256- or 512-bit key, and a 16-byte initialization vector.
+        """
+        self._key: bytes = key
+        self._iv: bytes = iv
+        self._cipher: AES = AES.new(key, AES.MODE_ECB)
+        self._keystream_block: bytes = self._cipher.encrypt(iv)
 
-    for i in range(1, count):
-        blocks += cipher.encrypt(blocks[-1])
+    def _gen_next_keystream_block(self):
+        self._keystream_block = self._cipher.encrypt(self._keystream_block)
 
-    return blocks
-
-
-def xor_block(first: bytes, second: bytes) -> bytes:
-    return bytes(pair[0] ^ pair[1] for pair in zip(first, second))
-
-
-def encrypt_ofb(key: bytes, iv: bytes, plaintext: bytes) -> bytes:
-    plaintext = null_pad(plaintext, 16)
-    plain_blocks = split_blocks(plaintext, 16)
-    xor_blocks = keystream_blocks(key, iv, len(plain_blocks))
-    enc_blocks = [
-        xor_block(pair[0], pair[1])
-        for pair in zip(plain_blocks, xor_blocks)
-    ]
-    encrypted = b''.join(enc_blocks)
-    return encrypted
-
-
-def decrypt_ofb(key: bytes, iv: bytes, ciphertext: bytes) -> bytes:
-    plain_blocks = split_blocks(ciphertext, 16)
-    xor_blocks = keystream_blocks(key, iv, len(plain_blocks))
-    dec_blocks = [
-        xor_block(pair[0], pair[1])
-        for pair in zip(plain_blocks, xor_blocks)
-    ]
-    decrypted = b''.join(dec_blocks)
-    decrypted = null_unpad(decrypted)
-    return decrypted
+    def transform(self, input_text: bytes) -> bytes:
+        """
+        Encrypt OR decrypt the input text. DO NOT USE the same cipher for both functions.
+        """
+        ciphertext = bytearray(len(input_text))  # preallocate, same length as input_text
+        i = 0
+        for index, byte in enumerate(input_text):
+            if i > 15:
+                i = 0
+                self._gen_next_keystream_block()
+            ciphertext[index] = byte ^ self._keystream_block[i]
+            i += 1
+        return bytes(ciphertext)
 
 
 def testing():
     key = os.urandom(16)
-    enc = encrypt_ofb(key, b'0'*16, b'hello world')
-    dec = decrypt_ofb(key, b'0'*16, enc)
+    encryptor = CipherOFB(key, b'0' * 16)
+    enc = encryptor.transform(b'hello, world!')
+    decryptor = CipherOFB(key, b'0' * 16)
+    dec = decryptor.transform(enc)
     print(dec)
 
 
 if __name__ == '__main__':
     testing()
-
