@@ -2,6 +2,7 @@ import os
 import socket
 from typing import Any
 from socket_util import send_header, recv_header
+from crypt import CipherECB
 
 ecb_key = os.urandom(32)
 ofb_key = os.urandom(32)
@@ -10,6 +11,7 @@ host = '127.0.0.1'  # localhost
 port = 3001
 
 shared_key = b'\x08\xe4\x7f\xe8\xf2-\x86l\xef\xca\x83\xf7\xa0?\xf2N\xd9\x98F\x01\xadkhG\x8d\xcc\x1f\x90\xc5H,\x98'
+shared_cipher = CipherECB(shared_key)
 
 
 def handle(client_socket: socket, addr: Any):
@@ -18,9 +20,9 @@ def handle(client_socket: socket, addr: Any):
         data = recv_header(client_socket)
         print('Received ', data)
         if data == b'ecb':
-            send_header(client_socket, ecb_key)
+            send_header(client_socket, shared_cipher.encrypt(ecb_key))
         elif data == b'ofb':
-            send_header(client_socket, ofb_key)
+            send_header(client_socket, shared_cipher.encrypt(ofb_key))
         else:
             send_header(client_socket, b'wait, what?')
 
