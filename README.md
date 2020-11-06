@@ -38,3 +38,14 @@ are nevoie de un bloc IV de 16B, folosit in generarea blocurilor de keystream, s
 padare). Ambele clase folosesc la baza AES (din libraria `PyCryptodome`) instantiat pe modul ECB;
 nu e posibil sa instantiem AES fara un mod, dar folosind modul ECB pe un singur bloc de 16B putem 
 avea exact acelasi lucru ca si AES la baza.
+
+In cazul in care se foloseste criptarea OFB, la initierea conversatiei nodul A genereaza si trimite
+si doi vectori de initializare folositi la comunicare (unul pentru fiecare directie). Fiecare IV,
+impreuna cu cheia conversatiei (obtinuta de la KM), sunt folositi pentru instantierea clasei 
+CipherOFB.
+
+## Teste efectuate
+- trimiterea de mesaje scurte intre A/B cu modul ECB ('hello', 'hi')
+- trimiterea de mesaje scurte intre A/B cu modul OFB
+- trimiterea unui mesaj lung cu ECB (ultimul paragraf al sectiunii precedente)
+- trimiterea unui mesaj lung cu OFB
